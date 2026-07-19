@@ -5,6 +5,10 @@ routes. The timings include travel and automatic movement across each obstacle,
 making it easier to look away during the course and return when the next
 obstacle is ready.
 
+<img width="640" height="360" alt="wyrm-agility-demo-10s-github" src="https://github.com/user-attachments/assets/09ff9306-16d0-4bc1-8e0d-b57a5a54c3f2" />
+
+<img width="237" height="195" alt="image" src="https://github.com/user-attachments/assets/2f49fb69-2d17-4d6a-8cc5-962200b28b85" />
+
 ## Features
 
 - A movable progress bar with a single remaining-time display.
