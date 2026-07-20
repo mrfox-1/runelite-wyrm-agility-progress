@@ -70,6 +70,8 @@ public class WyrmAgilityProgressPlugin extends Plugin
 
 	private boolean completionSoundPlayed;
 	private WorldPoint lastLocation;
+	private WorldPoint timerStartLocation;
+	private boolean tentativeTimer;
 	private String lastOverheadText;
 
 	@Override
@@ -100,16 +102,20 @@ public class WyrmAgilityProgressPlugin extends Plugin
 			return;
 		}
 
-		if (tracking)
+		long now = System.currentTimeMillis();
+		boolean replacingBeforeReady = tracking && now < expectedEndMs;
+		if (tracking && now >= expectedEndMs)
 		{
 			playCompletionSound();
 		}
 
 		obstacleName = cleanName(event.getMenuTarget(), event.getMenuOption());
-		startedAtMs = System.currentTimeMillis();
+		startedAtMs = now;
 		expectedEndMs = startedAtMs + (long) ticks * GAME_TICK_MS;
 		completionSoundPlayed = false;
 		lastLocation = local.getWorldLocation();
+		timerStartLocation = lastLocation;
+		tentativeTimer = replacingBeforeReady;
 		tracking = true;
 		updateOverheadCountdown(local);
 	}
@@ -130,6 +136,11 @@ public class WyrmAgilityProgressPlugin extends Plugin
 		}
 
 		long now = System.currentTimeMillis();
+		if (tentativeTimer && timerStartLocation != null
+			&& !local.getWorldLocation().equals(timerStartLocation))
+		{
+			tentativeTimer = false;
+		}
 		updateOverheadCountdown(local);
 		if (now >= expectedEndMs)
 		{
@@ -155,6 +166,12 @@ public class WyrmAgilityProgressPlugin extends Plugin
 
 	private boolean canReplaceTimer(Player local)
 	{
+		if (tentativeTimer && timerStartLocation != null
+			&& local.getWorldLocation().equals(timerStartLocation))
+		{
+			return true;
+		}
+
 		long remaining = expectedEndMs - System.currentTimeMillis();
 		if (remaining <= GAME_TICK_MS)
 		{
@@ -214,6 +231,8 @@ public class WyrmAgilityProgressPlugin extends Plugin
 		tracking = false;
 		completionSoundPlayed = false;
 		lastLocation = null;
+		timerStartLocation = null;
+		tentativeTimer = false;
 	}
 
 	private static Integer getWyrmTicks(int id)
