@@ -46,6 +46,17 @@ public interface WyrmAgilityProgressConfig extends Config
 		return false;
 	}
 
+	@Range(min = 0, max = 60)
+	@ConfigItem(
+		keyName = "minimumSoundSeconds",
+		name = "Minimum sound length",
+		description = "Only play the completion sound for obstacles longer than this many seconds (0 plays for all)"
+	)
+	default int minimumSoundSeconds()
+	{
+		return 0;
+	}
+
 	@Range(min = 0, max = 65535)
 	@ConfigItem(
 		keyName = "completionSoundId",
