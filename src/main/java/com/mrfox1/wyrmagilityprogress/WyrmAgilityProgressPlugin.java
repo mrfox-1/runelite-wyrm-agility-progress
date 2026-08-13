@@ -27,8 +27,10 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.ObjectID;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -46,6 +48,9 @@ public class WyrmAgilityProgressPlugin extends Plugin
 
 	@Inject
 	private Client client;
+
+	@Inject
+	private ClientThread clientThread;
 
 	@Inject
 	private WyrmAgilityProgressConfig config;
@@ -73,6 +78,7 @@ public class WyrmAgilityProgressPlugin extends Plugin
 	private WorldPoint timerStartLocation;
 	private boolean tentativeTimer;
 	private String lastOverheadText;
+	private int currentObstacleTicks;
 
 	@Override
 	protected void startUp()
@@ -97,7 +103,12 @@ public class WyrmAgilityProgressPlugin extends Plugin
 		}
 
 		Integer ticks = getWyrmTicks(event.getId());
-		if (ticks == null || tracking && !canReplaceTimer(local))
+		if (ticks == null)
+		{
+			return;
+		}
+
+		if (tracking && !canReplaceTimer(local))
 		{
 			return;
 		}
@@ -112,6 +123,7 @@ public class WyrmAgilityProgressPlugin extends Plugin
 		obstacleName = cleanName(event.getMenuTarget(), event.getMenuOption());
 		startedAtMs = now;
 		expectedEndMs = startedAtMs + (long) ticks * GAME_TICK_MS;
+		currentObstacleTicks = ticks;
 		completionSoundPlayed = false;
 		lastLocation = local.getWorldLocation();
 		timerStartLocation = lastLocation;
@@ -134,7 +146,6 @@ public class WyrmAgilityProgressPlugin extends Plugin
 			reset();
 			return;
 		}
-
 		long now = System.currentTimeMillis();
 		if (tentativeTimer && timerStartLocation != null
 			&& !local.getWorldLocation().equals(timerStartLocation))
@@ -164,6 +175,23 @@ public class WyrmAgilityProgressPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (WyrmAgilityProgressConfig.GROUP.equals(event.getGroup())
+			&& "completionSoundId".equals(event.getKey()))
+		{
+			int soundId = config.completionSoundId();
+			clientThread.invokeLater(() ->
+			{
+				if (client.getGameState() == GameState.LOGGED_IN)
+				{
+					client.playSoundEffect(soundId);
+				}
+			});
+		}
+	}
+
 	private boolean canReplaceTimer(Player local)
 	{
 		if (tentativeTimer && timerStartLocation != null
@@ -185,7 +213,8 @@ public class WyrmAgilityProgressPlugin extends Plugin
 
 	private void playCompletionSound()
 	{
-		if (!completionSoundPlayed && config.completionSound())
+		if (!completionSoundPlayed && config.completionSound()
+			&& (long) currentObstacleTicks * GAME_TICK_MS > (long) config.minimumSoundSeconds() * 1000L)
 		{
 			client.playSoundEffect(config.completionSoundId());
 			completionSoundPlayed = true;
@@ -233,6 +262,7 @@ public class WyrmAgilityProgressPlugin extends Plugin
 		lastLocation = null;
 		timerStartLocation = null;
 		tentativeTimer = false;
+		currentObstacleTicks = 0;
 	}
 
 	private static Integer getWyrmTicks(int id)
@@ -242,13 +272,13 @@ public class WyrmAgilityProgressPlugin extends Plugin
 			case ObjectID.VARLAMORE_WYRM_AGILITY_START_LADDER_TRIGGER:
 				return 6;
 			case ObjectID.VARLAMORE_WYRM_AGILITY_BALANCE_1_TRIGGER:
-				return 32;
+				return 45;
 			case ObjectID.VARLAMORE_WYRM_AGILITY_END_ZIPLINE_TRIGGER:
 				return 15;
 			case ObjectID.VARLAMORE_WYRM_AGILITY_BASIC_BALANCE_1_TRIGGER:
 				return 18;
 			case ObjectID.VARLAMORE_WYRM_AGILITY_BASIC_MONKEYBARS_1_TRIGGER:
-				return 17;
+				return 30;
 			case ObjectID.VARLAMORE_WYRM_AGILITY_BASIC_LADDER_1_TRIGGER:
 				return 3;
 			case ObjectID.VARLAMORE_WYRM_AGILITY_ADVANCED_LADDER_1_TRIGGER:
@@ -256,7 +286,7 @@ public class WyrmAgilityProgressPlugin extends Plugin
 			case ObjectID.VARLAMORE_WYRM_AGILITY_ADVANCED_JUMP_1_TRIGGER:
 				return 10;
 			case ObjectID.VARLAMORE_WYRM_AGILITY_ADVANCED_BALANCE_1_TRIGGER:
-				return 32;
+				return 59;
 			default:
 				return null;
 		}
