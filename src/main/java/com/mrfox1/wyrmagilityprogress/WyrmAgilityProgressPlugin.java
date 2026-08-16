@@ -27,6 +27,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.gameval.ObjectID;
+import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -53,6 +54,9 @@ public class WyrmAgilityProgressPlugin extends Plugin
 	private ClientThread clientThread;
 
 	@Inject
+	private Notifier notifier;
+
+	@Inject
 	private WyrmAgilityProgressConfig config;
 
 	@Inject
@@ -73,7 +77,7 @@ public class WyrmAgilityProgressPlugin extends Plugin
 	@Getter
 	private long expectedEndMs;
 
-	private boolean completionSoundPlayed;
+	private boolean completionNotificationSent;
 	private WorldPoint lastLocation;
 	private WorldPoint timerStartLocation;
 	private boolean tentativeTimer;
@@ -117,14 +121,14 @@ public class WyrmAgilityProgressPlugin extends Plugin
 		boolean replacingBeforeReady = tracking && now < expectedEndMs;
 		if (tracking && now >= expectedEndMs)
 		{
-			playCompletionSound();
+			sendCompletionNotification();
 		}
 
 		obstacleName = cleanName(event.getMenuTarget(), event.getMenuOption());
 		startedAtMs = now;
 		expectedEndMs = startedAtMs + (long) ticks * GAME_TICK_MS;
 		currentObstacleTicks = ticks;
-		completionSoundPlayed = false;
+		completionNotificationSent = false;
 		lastLocation = local.getWorldLocation();
 		timerStartLocation = lastLocation;
 		tentativeTimer = replacingBeforeReady;
@@ -155,7 +159,7 @@ public class WyrmAgilityProgressPlugin extends Plugin
 		updateOverheadCountdown(local);
 		if (now >= expectedEndMs)
 		{
-			playCompletionSound();
+			sendCompletionNotification();
 		}
 		if (now >= expectedEndMs + GAME_TICK_MS)
 		{
@@ -211,13 +215,26 @@ public class WyrmAgilityProgressPlugin extends Plugin
 			&& local.getWorldLocation().equals(lastLocation);
 	}
 
-	private void playCompletionSound()
+	private void sendCompletionNotification()
 	{
-		if (!completionSoundPlayed && config.completionSound()
-			&& (long) currentObstacleTicks * GAME_TICK_MS > (long) config.minimumSoundSeconds() * 1000L)
+		if (completionNotificationSent)
+		{
+			return;
+		}
+
+		completionNotificationSent = true;
+		if ((long) currentObstacleTicks * GAME_TICK_MS <= (long) config.minimumSoundSeconds() * 1000L)
+		{
+			return;
+		}
+
+		if (config.completionSound())
 		{
 			client.playSoundEffect(config.completionSoundId());
-			completionSoundPlayed = true;
+		}
+		if (config.nativeNotification())
+		{
+			notifier.notify(obstacleName + " complete");
 		}
 	}
 
@@ -258,7 +275,7 @@ public class WyrmAgilityProgressPlugin extends Plugin
 	{
 		clearOverheadCountdown();
 		tracking = false;
-		completionSoundPlayed = false;
+		completionNotificationSent = false;
 		lastLocation = null;
 		timerStartLocation = null;
 		tentativeTimer = false;

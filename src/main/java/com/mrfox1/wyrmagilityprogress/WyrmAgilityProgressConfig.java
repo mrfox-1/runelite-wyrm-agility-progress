@@ -29,7 +29,8 @@ public interface WyrmAgilityProgressConfig extends Config
 	@ConfigItem(
 		keyName = "overheadCountdown",
 		name = "Overhead countdown",
-		description = "Show a local-only yellow countdown above your character"
+		description = "Show a local-only yellow countdown above your character",
+		position = 1
 	)
 	default boolean overheadCountdown()
 	{
@@ -37,9 +38,21 @@ public interface WyrmAgilityProgressConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "nativeNotification",
+		name = "RuneLite notification",
+		description = "Use RuneLite notifications (tray notification, request focus, taskbar flash, etc.) when the next obstacle should be clickable",
+		position = 2
+	)
+	default boolean nativeNotification()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "completionSound",
-		name = "Completion sound",
-		description = "Play a sound when the next obstacle should be clickable"
+		name = "Plugin-specific sound only",
+		description = "Play the plugin's configured sound when the next obstacle should be clickable",
+		position = 3
 	)
 	default boolean completionSound()
 	{
@@ -49,8 +62,9 @@ public interface WyrmAgilityProgressConfig extends Config
 	@Range(min = 0, max = 60)
 	@ConfigItem(
 		keyName = "minimumSoundSeconds",
-		name = "Minimum sound length",
-		description = "Only play the completion sound for obstacles longer than this many seconds (0 plays for all)"
+		name = "Minimum notification length",
+		description = "Only notify for obstacles longer than this many seconds (0 notifies for all)",
+		position = 4
 	)
 	default int minimumSoundSeconds()
 	{
@@ -61,7 +75,8 @@ public interface WyrmAgilityProgressConfig extends Config
 	@ConfigItem(
 		keyName = "completionSoundId",
 		name = "Sound ID",
-		description = "RuneLite sound effect ID played on completion"
+		description = "RuneLite sound effect ID played on completion",
+		position = 5
 	)
 	default int completionSoundId()
 	{

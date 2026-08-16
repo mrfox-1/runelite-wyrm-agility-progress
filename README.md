@@ -17,17 +17,23 @@ making it easier to look away and return when the next obstacle is ready.
 - Fixed timings measured from complete laps of both updated Wyrm routes.
 - Optional local-only overhead countdown above the player.
 - Optional completion sound when the next obstacle is ready.
-- Configurable minimum obstacle length for sounds, allowing short obstacles to
-  stay silent while longer AFK sections still notify you.
+- Optional native RuneLite notification that follows the client's notification
+  settings, including tray notifications, request focus, and taskbar flashing.
+- Configurable minimum obstacle length for notifications, allowing short
+  obstacles to stay silent while longer AFK sections still notify you.
 - Configurable RuneLite sound effect ID with an immediate preview when changed.
 - Protection against premature distant clicks replacing the active timer.
 
 The plugin does not automate input or interact with obstacles for the player.
 
-## Sound settings
+## Notification settings
 
-Enable **Completion sound** to hear a notification when the active obstacle
-finishes. Set **Minimum sound length** to notify only for obstacles longer than
+Enable **Plugin-specific sound only** to hear the configured in-game sound when the active obstacle
+finishes. Enable **RuneLite notification** to use RuneLite's native notification
+system; RuneLite's global notification settings control tray messages, taskbar
+flashing, and requesting focus when the client is minimized.
+
+Set **Minimum notification length** to notify only for obstacles longer than
 that number of seconds. For example, setting it to `10` keeps obstacles of 10
 seconds or less silent. A value of `0` allows notifications for every obstacle.
 
